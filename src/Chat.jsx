@@ -1,12 +1,16 @@
 import {useContext, useEffect, useRef, useState} from "react";
-
 import Logo from "./Logo";
 import {UserContext} from "./UserContext.jsx";
 import {uniqBy} from "lodash";
 import axios from "axios";
 import Contact from "./Contact";
 
+
+
+
+
 export default function Chat() {
+
   const [ws,setWs] = useState(null);
   const [onlinePeople,setOnlinePeople] = useState({});
   const [offlinePeople,setOfflinePeople] = useState({});
@@ -15,9 +19,12 @@ export default function Chat() {
   const [messages,setMessages] = useState([]);
   const {username,id,setId,setUsername} = useContext(UserContext);
   const divUnderMessages = useRef();
+
   useEffect(() => {
     connectToWs();
   }, [selectedUserId]);
+
+
   function connectToWs() {
     const ws = new WebSocket('ws://localhost:5000');
     setWs(ws);
@@ -29,6 +36,8 @@ export default function Chat() {
       }, 1000);
     });
   }
+
+
   function showOnlinePeople(peopleArray) {
     const people = {};
     peopleArray.forEach(({userId,username}) => {
@@ -36,6 +45,8 @@ export default function Chat() {
     });
     setOnlinePeople(people);
   }
+
+
   function handleMessage(ev) {
     const messageData = JSON.parse(ev.data);
     console.log({ev,messageData});
@@ -47,6 +58,8 @@ export default function Chat() {
       }
     }
   }
+
+
   function logout() {
     axios.post('/logout').then(() => {
       setWs(null);
@@ -54,6 +67,8 @@ export default function Chat() {
       setUsername(null);
     });
   }
+
+
   function sendMessage(ev, file = null) {
     if (ev) ev.preventDefault();
     ws.send(JSON.stringify({
@@ -62,10 +77,13 @@ export default function Chat() {
       file,
     }));
     if (file) {
+      // --------- load messages from database ------------
       axios.get('/messages/'+selectedUserId).then(res => {
         setMessages(res.data);
       });
-    } else {
+    } 
+    
+    else {
       setNewMessageText('');
       setMessages(prev => ([...prev,{
         text: newMessageText,
@@ -75,6 +93,8 @@ export default function Chat() {
       }]));
     }
   }
+
+
   function sendFile(ev) {
     const reader = new FileReader();
     reader.readAsDataURL(ev.target.files[0]);
@@ -86,12 +106,14 @@ export default function Chat() {
     };
   }
 
+
   useEffect(() => {
     const div = divUnderMessages.current;
     if (div) {
       div.scrollIntoView({behavior:'smooth', block:'end'});
     }
   }, [messages]);
+
 
   useEffect(() => {
     axios.get('/people').then(res => {
@@ -106,6 +128,7 @@ export default function Chat() {
     });
   }, [onlinePeople]);
 
+
   useEffect(() => {
     if (selectedUserId) {
       axios.get('/messages/'+selectedUserId).then(res => {
@@ -114,6 +137,7 @@ export default function Chat() {
     }
   }, [selectedUserId]);
 
+
   const onlinePeopleExclOurUser = {...onlinePeople};
   delete onlinePeopleExclOurUser[id];
 
@@ -121,7 +145,7 @@ export default function Chat() {
 
   return (
     <div className="flex h-screen">
-      <div className="bg-white w-1/3 flex flex-col">
+      <div className="bg-white w-1/4 flex flex-col">
         <div className="flex-grow">
           <Logo />
           {Object.keys(onlinePeopleExclOurUser).map(userId => (
@@ -152,14 +176,14 @@ export default function Chat() {
           </span>
           <button
             onClick={logout}
-            className="text-sm bg-blue-100 py-1 px-2 text-gray-500 border rounded-sm">logout</button>
+            className="text-sm bg-blue-400 p-2 rounded-md text-black border">logout</button>
         </div>
       </div>
-      <div className="flex flex-col bg-blue-50 w-2/3 p-2">
+      <div className="flex flex-col bg-blue-50 w-3/4 p-2">
         <div className="flex-grow">
           {!selectedUserId && (
             <div className="flex h-full flex-grow items-center justify-center">
-              <div className="text-gray-300">&larr; Select a person from the sidebar</div>
+              <div className="text-gray-300">Select a person from the sidebar</div>
             </div>
           )}
           {!!selectedUserId && (
